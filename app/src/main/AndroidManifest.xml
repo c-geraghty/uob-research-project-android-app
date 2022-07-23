@@ -30,6 +30,7 @@
             />
 
         <receiver android:name=".ReminderBroadcast"/>
+        <receiver android:name=".DB_Broadcast"/>
 
     </application>
 

@@ -66,9 +66,6 @@ public class MainActivity extends AppCompatActivity {
                 pendingIntent);
 
         Calendar calendar2 = Calendar.getInstance();
-        calendar2.set(Calendar.HOUR_OF_DAY, 11);
-        calendar2.set(Calendar.MINUTE, 25);
-        calendar2.set(Calendar.SECOND, 0);
 
         if (calendar2.getTime().compareTo(new Date()) < 0)
             calendar2.add(Calendar.DAY_OF_MONTH, 1);
@@ -82,163 +79,26 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("TEST");
 
 
-
-
-
-
-        Intent intent2 = new Intent(MainActivity.this, ReminderBroadcast.class);
+        Intent intent2 = new Intent(MainActivity.this, DB_Broadcast.class);
         PendingIntent pendingIntent2 = PendingIntent.getBroadcast(MainActivity.this, 1, intent2, PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager2 = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         alarmManager2.setRepeating(AlarmManager.RTC_WAKEUP,
                 calendar2.getTimeInMillis(),
-                AlarmManager.INTERVAL_DAY,
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
                 pendingIntent2);
+
+
 
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                long phoneUsageToday = 0;
-                long totalTime = 0;
-
-
-
-                Toast.makeText(MainActivity.this, "Reminder set!", Toast.LENGTH_SHORT).show();
-
-                Calendar calendar = Calendar.getInstance();
-                calendar.set(Calendar.HOUR_OF_DAY, 10);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-
-                if (calendar.getTime().compareTo(new Date()) < 0)
-                    calendar.add(Calendar.DAY_OF_MONTH, 1);
-
-                Intent intent = new Intent(MainActivity.this, ReminderBroadcast.class);
-
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-
-                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-
-                final UsageStatsManager usageStatsManager = (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);// Context.USAGE_STATS_SERVICE);
-                Calendar beginCal = Calendar.getInstance();
-                beginCal.set(Calendar.HOUR_OF_DAY, 0);
-                beginCal.set(Calendar.MINUTE, 0);
-                beginCal.set(Calendar.SECOND, 0);
-
-                Calendar endCal = Calendar.getInstance();
-
-
-                long currTime = System.currentTimeMillis();
-                long startTime = currTime - 1000*3600*3; //querying past three hours
-
-                UsageEvents.Event currentEvent;
-                List<UsageEvents.Event> allEvents = new ArrayList<>();
-                HashMap<String, AppUsageInfo> map = new HashMap <String, AppUsageInfo> ();
-
-                UsageStatsManager mUsageStatsManager =  (UsageStatsManager)
-                        getSystemService(USAGE_STATS_SERVICE);
-
-                assert mUsageStatsManager != null;
-                UsageEvents usageEvents = mUsageStatsManager.queryEvents(beginCal.getTimeInMillis(), currTime);
-
-
-
-                while (usageEvents.hasNextEvent()) {
-
-
-
-                    currentEvent = new UsageEvents.Event();
-                    usageEvents.getNextEvent(currentEvent);
-
-
-                    if (currentEvent.getEventType() == UsageEvents.Event.SCREEN_INTERACTIVE ||
-                            currentEvent.getEventType() == UsageEvents.Event.SCREEN_NON_INTERACTIVE) {
-
-
-                        allEvents.add(currentEvent);
-                        String key = currentEvent.getPackageName();
-
-// taking it into a collection to access by package name
-                        if (map.get(key)==null)
-                            map.put(key,new AppUsageInfo(key));
-                    }
-                }
-
-                //iterating through the arraylist 
-                for (int i=0;i<allEvents.size()-1;i++){
-
-
-
-                    UsageEvents.Event E0=allEvents.get(i);
-                    UsageEvents.Event E1=allEvents.get(i+1);
-
-
-
-
-//for UsageTime of apps in time range
-                    if (E0.getEventType()==15 && E1.getEventType()==16
-                    ){
-
-                        long diff = E1.getTimeStamp()-E0.getTimeStamp();
-                        phoneUsageToday+=diff; //gloabl Long var for total usagetime in the timerange
-                        map.get(E0.getPackageName()).timeInForeground+= diff;
-                    }
-                    else if(E1.getEventType()==15 && ((i+1) == allEvents.size()-1)){
-
-                        long diff = System.currentTimeMillis()-E1.getTimeStamp();
-                        phoneUsageToday+=diff; //gloabl Long var for total usagetime in the timerange
-                        map.get(E0.getPackageName()).timeInForeground+= diff;
-
-                    }
-
-                }
-//transferred final data into modal class object
-                smallInfoList = new ArrayList<>(map.values());
-
-
-                System.out.println("Phone usage today: " + phoneUsageToday/(1000*60));
-
-
-                UsageDBSchema dbModel;
-
-                try {
-
-                    dbModel = new UsageDBSchema(-1, "21/07/2022", Math.toIntExact(phoneUsageToday/(1000*60)));
-                    Toast.makeText(MainActivity.this, "Adding usage: " + Math.toIntExact(phoneUsageToday/(1000*60)), Toast.LENGTH_SHORT).show();
-
-                } catch (Exception e) {
-
-                    dbModel = new UsageDBSchema(-1, "ERROR", 0);
-                    Toast.makeText(MainActivity.this, "ERROR ADDING TO DB", Toast.LENGTH_SHORT).show();
-
-                }
-
                 DBHelper dbHelper = new DBHelper(MainActivity.this);
+                List<UsageDBSchema> usageEvents = dbHelper.getAllUsage();
 
-                boolean success = dbHelper.addOne(dbModel);
-
-
-                /*final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, beginCal.getTimeInMillis(), endCal.getTimeInMillis());
-
-                System.out.println("results for " + beginCal.getTime() + " - " + endCal.getTime());
-
-                for (UsageStats app : queryUsageStats) {
-
-                    totalTime = totalTime + app.getTotalTimeInForeground();
-
-                }
-
-                System.out.println("Total time: " + totalTime/(1000));
-
-
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
-                        AlarmManager.INTERVAL_DAY,
-                        pendingIntent);*/
-
+                System.out.println(usageEvents.get(usageEvents.size() - 1).getUsageInMillis());
 
 
             }

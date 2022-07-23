@@ -2,10 +2,14 @@ package com.example.notifications;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DBHelper extends SQLiteOpenHelper {
 
@@ -51,6 +55,48 @@ public class DBHelper extends SQLiteOpenHelper {
             return false;
         }
         return true;
+
+    }
+
+    public List<UsageDBSchema> getAllUsage() {
+
+        List<UsageDBSchema> returnList = new ArrayList<>();
+
+        // get data from DB
+
+        String queryString = "SELECT * FROM " + USAGE_TABLE;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(queryString, null);
+
+        if (cursor.moveToFirst()) {
+
+            // loop through all the results
+
+            do {
+
+                int usageID = cursor.getInt(0);
+                String usageDate = cursor.getString(1);
+                int usageTime = cursor.getInt(2);
+
+                UsageDBSchema newUsage = new UsageDBSchema(usageID, usageDate, usageTime);
+                returnList.add(newUsage);
+
+            } while (cursor.moveToNext());
+
+        }
+
+        else {
+
+            //do nothing
+
+        }
+
+        cursor.close();
+        db.close();
+
+        return returnList;
 
     }
 

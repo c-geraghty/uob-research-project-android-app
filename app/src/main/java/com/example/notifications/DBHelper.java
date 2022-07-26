@@ -100,4 +100,13 @@ public class DBHelper extends SQLiteOpenHelper {
 
     }
 
+    public void clearDatabase() {
+
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        String clearDBQuery = "DELETE FROM " + USAGE_TABLE;
+        db.execSQL(clearDBQuery);
+        db.close();
+    }
+
 }

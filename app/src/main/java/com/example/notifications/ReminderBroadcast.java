@@ -37,6 +37,36 @@ public class ReminderBroadcast extends BroadcastReceiver {
 
         }
 
+        GetDailyUsage gdu = new GetDailyUsage(context);
+        int current = gdu.getUsage();
+
+        DBHelper dbHelper = new DBHelper(context);
+        List<UsageDBSchema> usageEvents = dbHelper.getAllUsage();
+
+        int previous = usageEvents.get(usageEvents.size() - 1).getUsageInMillis();
+
+        System.out.println("TESTTTTTTTTTTTTTTTTTTTT");
+
+        if (current > previous){
+
+            System.out.println("Current usage: " + current);
+            System.out.println("Yesterdays usage: " + previous);
+            System.out.println("You're using your phone more than yesterday!");
+
+            output = "You're using your phone more than yesterday!";
+
+        }
+        else{
+
+            System.out.println("Current usage: " + current);
+            System.out.println("Yesterdays usage: " + previous);
+            System.out.println("Your usage is down from yesterday, well done!");
+
+            output = "Your usage is down from yesterday, well done!";
+
+        }
+
+
 
         Intent activityChange = new Intent(context, DestinationActivity.class);
         activityChange.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -55,5 +85,10 @@ public class ReminderBroadcast extends BroadcastReceiver {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
         notificationManager.notify(200, builder.build());
+
     }
+
+
+
+
 }

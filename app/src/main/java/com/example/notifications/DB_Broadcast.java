@@ -24,8 +24,6 @@ public class DB_Broadcast extends BroadcastReceiver {
 
         long phoneUsageToday = 0;
 
-        Toast.makeText(context, "Reminder set!", Toast.LENGTH_SHORT).show();
-
         final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService(USAGE_STATS_SERVICE);// Context.USAGE_STATS_SERVICE);
 
         // find start of the day time

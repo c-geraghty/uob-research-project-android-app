@@ -26,11 +26,15 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".DestinationActivity"
-            />
+        <activity android:name=".HealthAdviceActivity"/>
+        <activity android:name=".Education_Activity"/>
 
-        <receiver android:name=".ReminderBroadcast"/>
+        <receiver android:name=".EndOfDayUsage_Broadcast"/>
+        <receiver android:name=".AverageUsage_Broadcast"/>
         <receiver android:name=".DB_Broadcast"/>
+        <receiver android:name=".HealthWarning_Broadcast"/>
+        <receiver android:name=".Education_Broadcast"/>
+
 
     </application>
 

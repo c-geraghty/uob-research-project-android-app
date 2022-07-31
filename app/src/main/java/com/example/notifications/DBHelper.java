@@ -51,6 +51,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         long insert = db.insert(USAGE_TABLE, null, cv);
 
+        db.close();
+
         if (insert == -1) {
             return false;
         }

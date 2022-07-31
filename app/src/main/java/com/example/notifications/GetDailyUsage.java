@@ -21,8 +21,6 @@ public class GetDailyUsage {
 
         long phoneUsageToday = 0;
 
-        Toast.makeText(context, "Reminder set!", Toast.LENGTH_SHORT).show();
-
         final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService(USAGE_STATS_SERVICE);// Context.USAGE_STATS_SERVICE);
 
         // find start of the day time
@@ -32,9 +30,6 @@ public class GetDailyUsage {
         beginCal.set(Calendar.SECOND, 0);
 
         Calendar currentTime = Calendar.getInstance();
-
-
-        System.out.println("Current Time: " + currentTime.getTime());
 
         long currTime = System.currentTimeMillis();
 
@@ -116,7 +111,7 @@ public class GetDailyUsage {
             }
         }
 
-        usage = ((int)phoneUsageToday)/(1000*60);
+        usage = ((int)phoneUsageToday / (1000*60));
 
 
     }

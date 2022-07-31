@@ -1,5 +1,6 @@
 package com.example.notifications;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlarmManager;
@@ -7,45 +8,42 @@ import android.app.AppOpsManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
-import android.app.usage.UsageEvents;
-import android.app.usage.UsageStats;
-import android.app.usage.UsageStatsManager;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.TextStyle;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
 
     List<AppUsageInfo> smallInfoList;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         createNotificationChannel();
+
         Button button = findViewById(R.id.button);
-        Button clear = findViewById(R.id.clear);
+        TextView tv = findViewById(R.id.textView3);
+
+
 
         if (!isAccessGranted()) {
             Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
@@ -54,16 +52,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         // GETS DAILY USAGE STATS
-
         GetDailyUsage gdu = new GetDailyUsage(this);
         System.out.println(gdu.getUsage());
 
-        // GET PREVIOUS USAGE
+        String outputStr = "Today's usage: \n" + gdu.getUsage() + " mins";
+        tv.setText(outputStr);
 
+        // GET PREVIOUS USAGE
         DBHelper dbHelper = new DBHelper(MainActivity.this);
 
-
-        // TODO fix the compare statement - to work when there's zero items in the list
 
         List<UsageDBSchema> usageEvents = dbHelper.getAllUsage();
 
@@ -78,40 +75,6 @@ public class MainActivity extends AppCompatActivity {
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
 
-        //Intent intent = new Intent(MainActivity.this, ReminderBroadcast.class);
-        Intent intenttest = new Intent(MainActivity.this, ReminderBroadcast.class);
-
-        Intent intent2 = new Intent(MainActivity.this, DB_Broadcast.class);
-
-
-        LocalDate today = LocalDate.now();
-        DayOfWeek dayOfWeek = today.getDayOfWeek();
-
-        Intent output_intent;
-
-        output_intent = intenttest;
-
-        if (dayOfWeek.getValue() == 2){
-
-            output_intent = intenttest;
-
-        }
-
-
-
-
-
-        PendingIntent pendingIntent2 = PendingIntent.getBroadcast(MainActivity.this, 1, output_intent, PendingIntent.FLAG_IMMUTABLE);
-        AlarmManager alarmManager2 = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, output_intent, PendingIntent.FLAG_IMMUTABLE);
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES/15,
-                pendingIntent);
-
         Calendar calendar2 = Calendar.getInstance();
 
         if (calendar2.getTime().compareTo(new Date()) < 0)
@@ -125,14 +88,83 @@ public class MainActivity extends AppCompatActivity {
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
 
+        LocalDate today = LocalDate.now();
+        DayOfWeek dayOfWeek = today.getDayOfWeek();
+
+        Intent EOD_usage_intent = new Intent(MainActivity.this, EndOfDayUsage_Broadcast.class);
+        Intent avg_usage_intent = new Intent(MainActivity.this, AverageUsage_Broadcast.class);
+        Intent DB_write_intent = new Intent(MainActivity.this, DB_Broadcast.class);
+        Intent health_intent = new Intent(MainActivity.this, HealthWarning_Broadcast.class);
+        Intent edu_intent = new Intent(MainActivity.this, Education_Broadcast.class);
 
 
-        //
-        //
+        // PENDING INTENTS
+        PendingIntent EOD_pend = PendingIntent.getBroadcast(MainActivity.this, 0, EOD_usage_intent, PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        PendingIntent DBwrite_pend = PendingIntent.getBroadcast(MainActivity.this, 1, DB_write_intent, PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager2 = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        PendingIntent avg_pend = PendingIntent.getBroadcast(MainActivity.this, 2, avg_usage_intent, PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager3 = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        PendingIntent health_pend = PendingIntent.getBroadcast(MainActivity.this, 3, health_intent, PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager4 = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        PendingIntent edu_pend = PendingIntent.getBroadcast(MainActivity.this, 4, edu_intent, PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager5 = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        // ALARM MANAGER SCHEDULING
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                EOD_pend);
+
         alarmManager2.setRepeating(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                DBwrite_pend);
+
+        alarmManager3.setRepeating(AlarmManager.RTC_WAKEUP,
                 calendar2.getTimeInMillis(),
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES/15,
-                pendingIntent2);
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                avg_pend);
+
+        alarmManager4.setRepeating(AlarmManager.RTC_WAKEUP,
+                calendar2.getTimeInMillis(),
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                health_pend);
+
+        alarmManager5.setRepeating(AlarmManager.RTC_WAKEUP,
+                calendar2.getTimeInMillis(),
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES/30,
+                edu_pend);
+
+
+        Thread t = new Thread() {
+
+            @Override
+            public void run() {
+                try {
+                    while (!isInterrupted()) {
+                        Thread.sleep(500);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                GetDailyUsage gd = new GetDailyUsage(MainActivity.this);
+                                String outputStr = "Todays Usage: \n" + String.valueOf(gd.getUsage()) + " mins";
+                                tv.setText(outputStr);
+                            }
+                        });
+                    }
+                } catch (InterruptedException e) {
+                }
+            }
+        };
+
+        t.start();
+
+
 
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -148,14 +180,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        clear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-                dbHelper.clearDatabase();
-
-            }
-        });
 
     }
 
@@ -192,6 +217,8 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+
 
     public void compareUsage() {
 
@@ -242,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
         int average = runningTotal / usageEvents.size();
 
-        if (current > runningTotal){
+        if (current > average){
 
             System.out.println("Current usage: " + current);
             System.out.println("Average usage: " + average);

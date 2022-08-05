@@ -15,11 +15,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -40,45 +43,67 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         createNotificationChannel();
 
-        Button button = findViewById(R.id.button);
         TextView tv = findViewById(R.id.textView3);
-
-
 
         if (!isAccessGranted()) {
             Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
             startActivity(intent);
         }
 
+        displayUsage();
+
+        Thread t = new Thread() {
+
+            @Override
+            public void run() {
+                try {
+                    while (!isInterrupted()) {
+                        Thread.sleep(1000);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                displayUsage();
+
+                            }
+                        });
+                    }
+                } catch (InterruptedException e) {
+                }
+            }
+        };
+
+        t.start();
 
         // GETS DAILY USAGE STATS
-        GetDailyUsage gdu = new GetDailyUsage(this);
-        System.out.println(gdu.getUsage());
-
-        String outputStr = "Today's usage: \n" + gdu.getUsage() + " mins";
-        tv.setText(outputStr);
+        //GetDailyUsage gdu = new GetDailyUsage(this);
+        //System.out.println(gdu.getUsage());
+        //String outputStr = "Today's usage: \n" + gdu.getUsage() + " mifffns";
+        //tv.setText(outputStr);
 
         // GET PREVIOUS USAGE
         DBHelper dbHelper = new DBHelper(MainActivity.this);
-
-
         List<UsageDBSchema> usageEvents = dbHelper.getAllUsage();
 
-        if(usageEvents.size() != 0) {
+        if (usageEvents.size() != 0) {
             System.out.println(usageEvents.get(usageEvents.size() - 1).getUsageInMillis());
         }
 
         // CALLING NOTIFICATION ALARM
 
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 12);
+        calendar.set(Calendar.MINUTE, 45);
         calendar.set(Calendar.SECOND, 0);
 
         Calendar calendar2 = Calendar.getInstance();
+        System.out.println(calendar2.getTime());
+        System.out.println(calendar.getTime());
 
-        if (calendar2.getTime().compareTo(new Date()) < 0)
-            calendar2.add(Calendar.DAY_OF_MONTH, 1);
+        if (calendar.getTime().compareTo(new Date()) < 0) {
+            System.out.println("BEHIND");
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
 
         // CODE FOR UPDATING DATABASE EVERY 15 MINUTES
 
@@ -91,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         LocalDate today = LocalDate.now();
         DayOfWeek dayOfWeek = today.getDayOfWeek();
 
-        Intent EOD_usage_intent = new Intent(MainActivity.this, EndOfDayUsage_Broadcast.class);
+
         Intent avg_usage_intent = new Intent(MainActivity.this, AverageUsage_Broadcast.class);
         Intent DB_write_intent = new Intent(MainActivity.this, DB_Broadcast.class);
         Intent health_intent = new Intent(MainActivity.this, HealthWarning_Broadcast.class);
@@ -99,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         // PENDING INTENTS
+        Intent EOD_usage_intent = new Intent(MainActivity.this, EndOfDayUsage_Broadcast.class);
         PendingIntent EOD_pend = PendingIntent.getBroadcast(MainActivity.this, 0, EOD_usage_intent, PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
@@ -114,11 +140,14 @@ public class MainActivity extends AppCompatActivity {
         PendingIntent edu_pend = PendingIntent.getBroadcast(MainActivity.this, 4, edu_intent, PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager5 = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-        // ALARM MANAGER SCHEDULING
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
-                EOD_pend);
+
+
+
+    // ALARM MANAGER SCHEDULING
+    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
+            calendar.getTimeInMillis(),
+            AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+            EOD_pend);
 
         alarmManager2.setRepeating(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
@@ -137,50 +166,50 @@ public class MainActivity extends AppCompatActivity {
 
         alarmManager5.setRepeating(AlarmManager.RTC_WAKEUP,
                 calendar2.getTimeInMillis(),
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES/30,
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
                 edu_pend);
 
 
-        Thread t = new Thread() {
 
-            @Override
-            public void run() {
-                try {
-                    while (!isInterrupted()) {
-                        Thread.sleep(500);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                GetDailyUsage gd = new GetDailyUsage(MainActivity.this);
-                                String outputStr = "Todays Usage: \n" + String.valueOf(gd.getUsage()) + " mins";
-                                tv.setText(outputStr);
-                            }
-                        });
-                    }
-                } catch (InterruptedException e) {
-                }
-            }
-        };
+    }
 
-        t.start();
+    private void displayUsage() {
 
 
+        GetDailyUsage gd = new GetDailyUsage(MainActivity.this);
+        int minsUsage = gd.getUsage();
+        int hourUsage = 0;
+        String output;
+
+        TextView tv = findViewById(R.id.textView3);
+
+        if (minsUsage < 60){
+
+            output = String.valueOf(minsUsage) + " mins";
 
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        } else {
 
-                if (usageEvents.size() == 0){
-                    Toast.makeText(MainActivity.this, "NO PRIOR ACTIVITY TO COMPARE WITH", Toast.LENGTH_SHORT).show();
-                }else {
-                    compareAverage();
-                }
+            hourUsage = 1;
+
+            while(minsUsage - 60 > 59){
+
+                hourUsage = hourUsage+1;
 
             }
-        });
 
 
+            if (hourUsage > 1){
+                output = String.valueOf(hourUsage) + " hours, " + String.valueOf(minsUsage % 60) + " mins";
+            }
+            else{
+                output = String.valueOf(hourUsage) + " hour, " + String.valueOf(minsUsage % 60) + " mins";
+            }
+
+        }
+
+        String outputStr = "Todays usage: \n" + output;
+        tv.setText(outputStr);
 
     }
 
@@ -210,6 +239,8 @@ public class MainActivity extends AppCompatActivity {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel("notifyConor", name, importance);
             channel.setDescription(description);
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{ 0 });
 
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);

@@ -53,10 +53,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         db.close();
 
-        if (insert == -1) {
-            return false;
-        }
-        return true;
+        return insert != -1;
 
     }
 

@@ -30,10 +30,49 @@ public class EndOfDayUsage_Broadcast extends BroadcastReceiver {
         DBHelper dbHelper = new DBHelper(context);
         List<UsageDBSchema> usageEvents = dbHelper.getAllUsage();
 
+        //
+        int minsUsage = gdu.getUsage();
+        int hourUsage = 0;
+
+
+        if (minsUsage < 60){
+
+            output = minsUsage + " mins";
+
+
+        } else {
+
+            hourUsage = 1;
+
+            while(minsUsage - 60 > 59){
+
+                hourUsage = hourUsage+1;
+
+            }
+
+
+            if (hourUsage > 1){
+                output = hourUsage + " hours, " + minsUsage % 60 + " mins";
+            }
+            else{
+                output = hourUsage + " hour, " + minsUsage % 60 + " mins";
+            }
+
+        }
+
+        String outputStr = "Todays Usage: " + output;
+
+
+
+
+
+
+
+
         // if no prior usage to compare ... DO SOMETHING
         if(usageEvents.size() == 0){
 
-            System.out.println("No usage events");
+            output = "This is the first day of tracking screen-time. Comparisons will be available on further. ";
 
         }
         // comapre with prior usage
@@ -46,18 +85,10 @@ public class EndOfDayUsage_Broadcast extends BroadcastReceiver {
             // then usage has increased from previous day
             if (current > previous) {
 
-                System.out.println("Current usage: " + current);
-                System.out.println("Yesterdays usage: " + previous);
-                System.out.println("You're using your phone more than yesterday!");
-
                 // set notification text to indicate increased usage
                 output = "You're using your phone more than yesterday!";
 
             } else {
-
-                System.out.println("Current usage: " + current);
-                System.out.println("Yesterdays usage: " + previous);
-                System.out.println("Your usage is down from yesterday, well done!");
 
                 // set notification text to indicate decreased usage
                 output = "Your usage is down from yesterday, well done!";
@@ -65,17 +96,17 @@ public class EndOfDayUsage_Broadcast extends BroadcastReceiver {
             }
 
 
-            Intent activityChange = new Intent(context, HealthAdviceActivity.class);
+            Intent activityChange = new Intent(context, MainActivity .class);
             activityChange.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             PendingIntent pend = PendingIntent.getActivity(context, 0, activityChange, PendingIntent.FLAG_IMMUTABLE);
 
             // specifies how the notification will look
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "notifyConor")
                     .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setContentTitle("Phone usage compared to yesterday:")
+                    .setContentTitle(outputStr)
                     .setContentText(output)
                     .setDefaults(NotificationCompat.DEFAULT_ALL)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .setContentIntent(pend)
                     .setAutoCancel(true);
 
@@ -84,6 +115,7 @@ public class EndOfDayUsage_Broadcast extends BroadcastReceiver {
             notificationManager.notify(200, builder.build());
         }
     }
+
 
 
 

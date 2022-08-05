@@ -14,7 +14,7 @@ import java.util.List;
 
 public class GetDailyUsage {
 
-    private int usage;
+    private final int usage;
     private String day;
 
     public GetDailyUsage(Context context) {
@@ -65,7 +65,6 @@ public class GetDailyUsage {
         // if statement for if there is only one event, screen ON
         if(allEvents.size() == 1){
 
-
             UsageEvents.Event E0 = allEvents.get(0);
             // if last event in list is an open
             // find the difference between timestamp of open and current time
@@ -79,8 +78,11 @@ public class GetDailyUsage {
 
         }
         else {
+
+
             //iterating through the arraylist
             for (int i = 0; i < allEvents.size() - 1; i++) {
+
 
                 UsageEvents.Event E0 = allEvents.get(i);
                 UsageEvents.Event E1 = allEvents.get(i + 1);

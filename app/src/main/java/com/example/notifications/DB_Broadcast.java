@@ -2,6 +2,7 @@ package com.example.notifications;
 
 import static android.content.Context.USAGE_STATS_SERVICE;
 
+import android.app.AlarmManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
@@ -9,9 +10,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,7 +23,9 @@ public class DB_Broadcast extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        NotificationSetter ns = new NotificationSetter();
+        ns.setDBWriteAlarmFromNoti(alarmManager, context);
 
         long phoneUsageToday = 0;
 
@@ -126,11 +131,13 @@ public class DB_Broadcast extends BroadcastReceiver {
         // writing usage to database
         UsageDBSchema dbModel;
 
-
+        SimpleDateFormat sdf = new SimpleDateFormat("dd - MM - yyyy");
+        Date date = new Date(System.currentTimeMillis());
+        String time = sdf.format(date);
 
         try {
 
-            dbModel = new UsageDBSchema(-1, String.format("%1$TH:%1$TM:%1$TS", System.currentTimeMillis()), Math.toIntExact(phoneUsageToday/(1000*60)));
+            dbModel = new UsageDBSchema(-1, time,  Math.toIntExact(phoneUsageToday/(1000*60)));
             Toast.makeText(context, "Adding usage: " + Math.toIntExact(phoneUsageToday/(1000*60)), Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
@@ -141,8 +148,32 @@ public class DB_Broadcast extends BroadcastReceiver {
         }
 
         DBHelper dbHelper = new DBHelper(context);
+        List<UsageDBSchema> priorUsage = dbHelper.getAllUsage();
 
-        boolean success = dbHelper.addOne(dbModel);
+        // if there is prior usage
+        if(priorUsage.size() != 0){
+
+            String previousDate = priorUsage.get(priorUsage.size() - 1).getDate();
+
+            if(previousDate.equals(time)){
+
+                dbHelper.update(dbModel, time);
+
+
+            }else{
+
+                dbHelper.addOne(dbModel);
+
+            }
+            // if no prior usage then nothing to compare with so just add
+        }else{
+
+            dbHelper.addOne(dbModel);
+
+        }
+
+        return;
+
 
 
     }

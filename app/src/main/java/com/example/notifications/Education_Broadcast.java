@@ -1,5 +1,6 @@
 package com.example.notifications;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,10 +14,12 @@ public class Education_Broadcast extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        NotificationSetter ns = new NotificationSetter();
+        ns.setEduAlarmFromNoti(alarmManager, context);
         System.out.println("Education notification");
 
-        Intent activityChange = new Intent(context, Education_Activity.class);
+        Intent activityChange = new Intent(context, MainActivity.class);
         activityChange.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pend = PendingIntent.getActivity(context, 0, activityChange, PendingIntent.FLAG_IMMUTABLE);
 

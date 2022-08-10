@@ -1,5 +1,6 @@
 package com.example.notifications;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,13 +18,17 @@ public class HealthWarning_Broadcast extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-            String output = "Consider one of these outdoor activities";
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        NotificationSetter ns = new NotificationSetter();
+        ns.setHealthAlarmFromNoti(alarmManager, context);
+
+            String output = "Consider one of these outdoor activities - HI SOUTHGATE :)";
 
             System.out.println("HEALTH WARNING");
 
-            Intent activityChange = new Intent(context, HealthAdviceActivity.class);
-            activityChange.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pend = PendingIntent.getActivity(context, 0, activityChange, PendingIntent.FLAG_IMMUTABLE);
+        Intent activityChange = new Intent(context, MainActivity.class);
+        activityChange.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pend = PendingIntent.getActivity(context, 0, activityChange, PendingIntent.FLAG_IMMUTABLE);
 
             // specifies how the notification will look
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "notifyConor")

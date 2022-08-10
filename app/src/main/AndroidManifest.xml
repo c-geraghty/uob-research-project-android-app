@@ -6,6 +6,7 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:largeHeap="true"
@@ -29,13 +30,24 @@
             </intent-filter>
         </activity>
 
+
         <activity android:name=".HealthAdviceActivity"/>
         <activity android:name=".Education_Activity"/>
 
-        <receiver android:name=".EndOfDayUsage_Broadcast"/>
+        <receiver android:name=".EndOfDayUsage_Broadcast" />
+
+        <receiver android:name=".HealthWarning_Broadcast"/>
+
+        <receiver android:name=".AlarmBootReceiver" android:enabled="true" android:exported="false" android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".AverageUsage_Broadcast"/>
         <receiver android:name=".DB_Broadcast"/>
-        <receiver android:name=".HealthWarning_Broadcast"/>
         <receiver android:name=".Education_Broadcast"/>
 
 

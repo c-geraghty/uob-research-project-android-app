@@ -99,6 +99,23 @@ public class DBHelper extends SQLiteOpenHelper {
 
     }
 
+    public void update(UsageDBSchema usageDB, String date){
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+
+        cv.put(USAGE_MILLIS, usageDB.getUsageInMillis());
+
+        db.update(USAGE_TABLE, cv, "USAGE_DATE = ?",  new String[]{date});
+
+        //long insert = db.insert(USAGE_TABLE, null, cv);
+
+        db.close();
+
+        return;
+
+    }
+
     public void clearDatabase() {
 
 
